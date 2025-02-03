@@ -2190,6 +2190,131 @@
         ]
       }
     },
+    "/v2/payments/list": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Payments - List",
+        "description": "To list the *payments*",
+        "operationId": "List all Payments",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "query",
+            "description": "The identifier for the customer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "starting_after",
+            "in": "query",
+            "description": "A cursor for use in pagination, fetch the next list after some object",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ending_before",
+            "in": "query",
+            "description": "A cursor for use in pagination, fetch the previous list before some object",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limit on the number of objects to return",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "created",
+            "in": "query",
+            "description": "The time at which payment is created",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "created_lt",
+            "in": "query",
+            "description": "Time less than the payment created time",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "created_gt",
+            "in": "query",
+            "description": "Time greater than the payment created time",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "created_lte",
+            "in": "query",
+            "description": "Time less than or equals to the payment created time",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "created_gte",
+            "in": "query",
+            "description": "Time greater than or equals to the payment created time",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved a payment list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentListResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payments found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "jwt_key": []
+          }
+        ]
+      }
+    },
     "/v2/payment-methods": {
       "post": {
         "tags": [
@@ -5695,11 +5820,6 @@
           "device_model": {
             "type": "string",
             "description": "The device model of the client",
-            "nullable": true
-          },
-          "accept_language": {
-            "type": "string",
-            "description": "Accept-language of the browser",
             "nullable": true
           }
         }
@@ -15183,8 +15303,8 @@
         "required": [
           "id",
           "merchant_id",
+          "profile_id",
           "customer_id",
-          "payment_method_id",
           "status",
           "amount",
           "created",
@@ -15206,8 +15326,7 @@
           },
           "profile_id": {
             "type": "string",
-            "description": "The business profile that is associated with this payment",
-            "nullable": true
+            "description": "The business profile that is associated with this payment"
           },
           "customer_id": {
             "type": "string",
@@ -15218,7 +15337,8 @@
           },
           "payment_method_id": {
             "type": "string",
-            "description": "Identifier for Payment Method used for the payment"
+            "description": "Identifier for Payment Method used for the payment",
+            "nullable": true
           },
           "status": {
             "allOf": [
