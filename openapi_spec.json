@@ -2313,6 +2313,50 @@
             "jwt_key": []
           }
         ]
+      },
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Payments - List By Filter",
+        "description": "To list the *payments* satisfying the filter requirements",
+        "operationId": "List all filtered Payments",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentListFilterConstraints"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved a payment list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentListResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payments found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "jwt_key": []
+          }
+        ]
       }
     },
     "/v2/payment-methods": {
@@ -12063,6 +12107,21 @@
           }
         }
       },
+      "Order": {
+        "type": "object",
+        "required": [
+          "on",
+          "by"
+        ],
+        "properties": {
+          "on": {
+            "$ref": "#/components/schemas/SortOn"
+          },
+          "by": {
+            "$ref": "#/components/schemas/SortBy"
+          }
+        }
+      },
       "OrderDetailsWithAmount": {
         "type": "object",
         "required": [
@@ -13312,6 +13371,139 @@
           }
         },
         "additionalProperties": false
+      },
+      "PaymentListFilterConstraints": {
+        "allOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeRange"
+              }
+            ],
+            "nullable": true
+          },
+          {
+            "type": "object",
+            "required": [
+              "payment_id"
+            ],
+            "properties": {
+              "payment_id": {
+                "type": "string",
+                "description": "The identifier for payment",
+                "example": "12345_pay_01926c58bc6e77c09e809964e72af8c8",
+                "maxLength": 64,
+                "minLength": 32
+              },
+              "profile_id": {
+                "type": "string",
+                "description": "The identifier for business profile",
+                "nullable": true
+              },
+              "customer_id": {
+                "type": "string",
+                "description": "The identifier for customer",
+                "example": "12345_cus_01926c58bc6e77c09e809964e72af8c8",
+                "nullable": true,
+                "maxLength": 64,
+                "minLength": 32
+              },
+              "limit": {
+                "type": "integer",
+                "format": "int32",
+                "description": "The limit on the number of objects. The default limit is 10 and max limit is 20",
+                "minimum": 0
+              },
+              "offset": {
+                "type": "integer",
+                "format": "int32",
+                "description": "The starting point within a list of objects",
+                "nullable": true,
+                "minimum": 0
+              },
+              "amount_filter": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AmountFilter"
+                  }
+                ],
+                "nullable": true
+              },
+              "connector": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Connector"
+                },
+                "description": "The list of connectors to filter payments list",
+                "nullable": true
+              },
+              "currency": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Currency"
+                },
+                "description": "The list of currencies to filter payments list",
+                "nullable": true
+              },
+              "status": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IntentStatus"
+                },
+                "description": "The list of payment status to filter payments list",
+                "nullable": true
+              },
+              "payment_method": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PaymentMethod"
+                },
+                "description": "The list of payment methods to filter payments list",
+                "nullable": true
+              },
+              "payment_method_type": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PaymentMethodType"
+                },
+                "description": "The list of payment method types to filter payments list",
+                "nullable": true
+              },
+              "authentication_type": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AuthenticationType"
+                },
+                "description": "The list of authentication types to filter payments list",
+                "nullable": true
+              },
+              "merchant_connector_id": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The list of merchant connector ids to filter payments list for selected label",
+                "nullable": true
+              },
+              "order": {
+                "$ref": "#/components/schemas/Order"
+              },
+              "card_network": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CardNetwork"
+                },
+                "description": "The List of all the card networks to filter payments list",
+                "nullable": true
+              },
+              "merchant_order_reference_id": {
+                "type": "string",
+                "description": "The identifier for merchant order reference id",
+                "nullable": true
+              }
+            }
+          }
+        ]
       },
       "PaymentListResponse": {
         "type": "object",
@@ -15304,7 +15496,6 @@
           "id",
           "merchant_id",
           "profile_id",
-          "customer_id",
           "status",
           "amount",
           "created",
@@ -15332,6 +15523,7 @@
             "type": "string",
             "description": "The identifier for the customer",
             "example": "12345_cus_01926c58bc6e77c09e809964e72af8c8",
+            "nullable": true,
             "maxLength": 64,
             "minLength": 32
           },
@@ -15374,9 +15566,11 @@
             "nullable": true
           },
           "connector": {
-            "type": "string",
-            "description": "The connector used for the payment",
-            "example": "stripe",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Connector"
+              }
+            ],
             "nullable": true
           },
           "merchant_connector_id": {
@@ -19653,6 +19847,20 @@
         "enum": [
           "cover",
           "contain"
+        ]
+      },
+      "SortBy": {
+        "type": "string",
+        "enum": [
+          "asc",
+          "desc"
+        ]
+      },
+      "SortOn": {
+        "type": "string",
+        "enum": [
+          "amount",
+          "created"
         ]
       },
       "SplitPaymentsRequest": {
