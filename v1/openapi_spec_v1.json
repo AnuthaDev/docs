@@ -11,10 +11,7 @@
     "license": {
       "name": "Apache-2.0"
     },
-    "version": "0.1.0",
-    "x-mcp": {
-      "enabled": true
-    }
+    "version": "0.1.0"
   },
   "servers": [
     {
@@ -24,10 +21,11 @@
   ],
   "paths": {
     "/payments": {
+      "x-mcp": {
+        "enabled": true
+      },
       "post": {
-        "tags": [
-          "Payments"
-        ],
+        "tags": ["Payments"],
         "summary": "Payments - Create",
         "description": "Creates a payment resource, which represents a customer's intent to pay.\nThis endpoint is the starting point for various payment flows:\n",
         "operationId": "Create a Payment",
@@ -475,10 +473,11 @@
       }
     },
     "/payments/{payment_id}": {
+      "x-mcp": {
+        "enabled": true
+      },
       "post": {
-        "tags": [
-          "Payments"
-        ],
+        "tags": ["Payments"],
         "summary": "Payments - Update",
         "description": "To update the properties of a *PaymentIntent* object. This may include attaching a payment method, or attaching customer object or metadata fields after the Payment is created",
         "operationId": "Update a Payment",
@@ -556,9 +555,7 @@
         ]
       },
       "get": {
-        "tags": [
-          "Payments"
-        ],
+        "tags": ["Payments"],
         "summary": "Payments - Retrieve",
         "description": "Retrieves a Payment. This API can also be used to get the status of a previously initiated payment or next action for an ongoing payment",
         "operationId": "Retrieve a Payment",
