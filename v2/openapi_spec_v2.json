@@ -11,7 +11,10 @@
     "license": {
       "name": "Apache-2.0"
     },
-    "version": "0.1.0"
+    "version": "0.1.0",
+    "x-mcp": {
+      "enabled": true
+    }
   },
   "servers": [
     {
@@ -3365,7 +3368,7 @@
       }
     },
     "/v2/refunds/list": {
-      "get": {
+      "post": {
         "tags": [
           "Refunds"
         ],
@@ -3990,7 +3993,7 @@
         "properties": {
           "city": {
             "type": "string",
-            "description": "The address city",
+            "description": "The city, district, suburb, town, or village of the address.",
             "example": "New York",
             "nullable": true,
             "maxLength": 50
@@ -4005,21 +4008,21 @@
           },
           "line1": {
             "type": "string",
-            "description": "The first line of the address",
+            "description": "The first line of the street address or P.O. Box.",
             "example": "123, King Street",
             "nullable": true,
             "maxLength": 200
           },
           "line2": {
             "type": "string",
-            "description": "The second line of the address",
+            "description": "The second line of the street address or P.O. Box (e.g., apartment, suite, unit, or building).",
             "example": "Powelson Avenue",
             "nullable": true,
             "maxLength": 50
           },
           "line3": {
             "type": "string",
-            "description": "The third line of the address",
+            "description": "The third line of the street address, if applicable.",
             "example": "Bridgewater",
             "nullable": true,
             "maxLength": 50
@@ -4828,7 +4831,8 @@
           "failure",
           "payment_method_awaited",
           "confirmation_awaited",
-          "device_data_collection_pending"
+          "device_data_collection_pending",
+          "integrity_failure"
         ]
       },
       "AuthenticationConnectorDetails": {
@@ -4898,7 +4902,7 @@
       },
       "AuthenticationType": {
         "type": "string",
-        "description": "Pass this parameter to force 3DS or non 3DS auth for this payment. Some connectors will still force 3DS auth even in case of passing 'no_three_ds' here and vice versa. Default value is 'no_three_ds' if not set",
+        "description": "Specifies the type of cardholder authentication to be applied for a payment.\n\n- `ThreeDs`: Requests 3D Secure (3DS) authentication. If the card is enrolled, 3DS authentication will be activated, potentially shifting chargeback liability to the issuer.\n- `NoThreeDs`: Indicates that 3D Secure authentication should not be performed. The liability for chargebacks typically remains with the merchant. This is often the default if not specified.\n\nNote: The actual authentication behavior can also be influenced by merchant configuration and specific connector defaults. Some connectors might still enforce 3DS or bypass it regardless of this parameter.",
         "enum": [
           "three_ds",
           "no_three_ds"
@@ -6264,6 +6268,28 @@
                 "type": "object"
               }
             }
+          },
+          {
+            "type": "object",
+            "required": [
+              "instant_bank_transfer_finland"
+            ],
+            "properties": {
+              "instant_bank_transfer_finland": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "instant_bank_transfer_poland"
+            ],
+            "properties": {
+              "instant_bank_transfer_poland": {
+                "type": "object"
+              }
+            }
           }
         ]
       },
@@ -6587,6 +6613,28 @@
                 "type": "object"
               }
             }
+          },
+          {
+            "type": "object",
+            "required": [
+              "instant_bank_transfer_finland"
+            ],
+            "properties": {
+              "instant_bank_transfer_finland": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "instant_bank_transfer_poland"
+            ],
+            "properties": {
+              "instant_bank_transfer_poland": {
+                "type": "object"
+              }
+            }
           }
         ]
       },
@@ -6735,6 +6783,23 @@
           }
         }
       },
+      "BillingConnectorAdditionalCardInfo": {
+        "type": "object",
+        "required": [
+          "card_network"
+        ],
+        "properties": {
+          "card_network": {
+            "$ref": "#/components/schemas/CardNetwork"
+          },
+          "card_issuer": {
+            "type": "string",
+            "description": "Card Issuer",
+            "example": "JP MORGAN CHASE",
+            "nullable": true
+          }
+        }
+      },
       "BillingConnectorPaymentDetails": {
         "type": "object",
         "required": [
@@ -6750,6 +6815,31 @@
             "type": "string",
             "description": "Billing Connector's Customer Id"
           }
+        }
+      },
+      "BillingConnectorPaymentMethodDetails": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "type",
+              "value"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "card"
+                ]
+              },
+              "value": {
+                "$ref": "#/components/schemas/BillingConnectorAdditionalCardInfo"
+              }
+            }
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type"
         }
       },
       "BlikBankRedirectAdditionalData": {
@@ -7080,7 +7170,7 @@
       },
       "CaptureMethod": {
         "type": "string",
-        "description": "Default value if not passed is set to 'automatic' which results in Auth and Capture in one single API request. Pass 'manual' or 'manual_multiple' in case you want do a separate Auth and Capture by first authorizing and placing a hold on your customer's funds so that you can use the Payments/Capture endpoint later to capture the authorized amount. Pass 'manual' if you want to only capture the amount later once or 'manual_multiple' if you want to capture the funds multiple times later. Both 'manual' and 'manual_multiple' are only supported by a specific list of processors",
+        "description": "Specifies how the payment is captured.\n- `automatic`: Funds are captured immediately after successful authorization. This is the default behavior if the field is omitted.\n- `manual`: Funds are authorized but not captured. A separate request to the `/payments/{payment_id}/capture` endpoint is required to capture the funds.",
         "enum": [
           "automatic",
           "manual",
@@ -7102,7 +7192,7 @@
         "properties": {
           "capture_id": {
             "type": "string",
-            "description": "Unique identifier for the capture"
+            "description": "A unique identifier for this specific capture operation."
           },
           "status": {
             "$ref": "#/components/schemas/CaptureStatus"
@@ -7123,11 +7213,11 @@
           },
           "connector": {
             "type": "string",
-            "description": "The connector used for the payment"
+            "description": "The name of the payment connector that processed this capture."
           },
           "authorized_attempt_id": {
             "type": "string",
-            "description": "Unique identifier for the parent attempt on which this capture is made"
+            "description": "The ID of the payment attempt that was successfully authorized and subsequently captured by this operation."
           },
           "connector_capture_id": {
             "type": "string",
@@ -7141,22 +7231,22 @@
           },
           "error_message": {
             "type": "string",
-            "description": "If there was an error while calling the connector the error message is received here",
+            "description": "A human-readable message from the connector explaining why this capture operation failed, if applicable.",
             "nullable": true
           },
           "error_code": {
             "type": "string",
-            "description": "If there was an error while calling the connectors the code is received here",
+            "description": "The error code returned by the connector if this capture operation failed. This code is connector-specific.",
             "nullable": true
           },
           "error_reason": {
             "type": "string",
-            "description": "If there was an error while calling the connectors the reason is received here",
+            "description": "A more detailed reason from the connector explaining the capture failure, if available.",
             "nullable": true
           },
           "reference_id": {
             "type": "string",
-            "description": "Reference to the capture at connector side",
+            "description": "The connector's own reference or transaction ID for this specific capture operation. Useful for reconciliation.",
             "nullable": true
           }
         }
@@ -9147,7 +9237,7 @@
       },
       "Currency": {
         "type": "string",
-        "description": "The three letter ISO currency code in uppercase. Eg: 'USD' for the United States Dollar.",
+        "description": "The three-letter ISO 4217 currency code (e.g., \"USD\", \"EUR\") for the payment amount. This field is mandatory for creating a payment.",
         "enum": [
           "AED",
           "AFN",
@@ -11307,7 +11397,7 @@
       },
       "FutureUsage": {
         "type": "string",
-        "description": "Indicates that you intend to make future payments with the payment methods used for this Payment. Providing this parameter will attach the payment method to the Customer, if present, after the Payment is confirmed and any required actions from the user are complete.\n- On_session - Payment method saved only at hyperswitch when consent is provided by the user. CVV will asked during the returning user payment\n- Off_session - Payment method saved at both hyperswitch and Processor when consent is provided by the user. No input is required during the returning user payment.",
+        "description": "Specifies how the payment method can be used for future payments.\n- `off_session`: The payment method can be used for future payments when the customer is not present.\n- `on_session`: The payment method is intended for use only when the customer is present during checkout.\nIf omitted, defaults to `on_session`.",
         "enum": [
           "off_session",
           "on_session"
@@ -12363,7 +12453,7 @@
       },
       "IntentStatus": {
         "type": "string",
-        "description": "The status of the current payment that was made",
+        "description": "Represents the overall status of a payment intent.\nThe status transitions through various states depending on the payment method, confirmation, capture method, and any subsequent actions (like customer authentication or manual capture).",
         "enum": [
           "succeeded",
           "failed",
@@ -12375,7 +12465,8 @@
           "requires_confirmation",
           "requires_capture",
           "partially_captured",
-          "partially_captured_and_capturable"
+          "partially_captured_and_capturable",
+          "conflicted"
         ]
       },
       "JCSVoucherData": {
@@ -13193,6 +13284,18 @@
         },
         "additionalProperties": false
       },
+      "MerchantCategoryCode": {
+        "type": "string",
+        "enum": [
+          "5411",
+          "7011",
+          "0763",
+          "8111",
+          "5021",
+          "4816",
+          "5661"
+        ]
+      },
       "MerchantConnectorAccountFeatureMetadata": {
         "type": "object",
         "description": "Feature metadata for merchant connector account",
@@ -13342,16 +13445,17 @@
       },
       "MerchantConnectorDetails": {
         "type": "object",
+        "required": [
+          "connector_name",
+          "merchant_connector_creds"
+        ],
         "properties": {
-          "connector_account_details": {
-            "type": "object",
-            "description": "Account details of the Connector. You can specify up to 50 keys, with key names up to 40 characters long and values up to 500 characters long. Useful for storing additional, structured information on an object.",
-            "nullable": true
+          "connector_name": {
+            "$ref": "#/components/schemas/Connector"
           },
-          "metadata": {
+          "merchant_connector_creds": {
             "type": "object",
-            "description": "Metadata is useful for storing additional, unstructured information on an object.",
-            "nullable": true
+            "description": "The merchant connector credentials used for the payment"
           }
         }
       },
@@ -14415,6 +14519,14 @@
                 "type": "integer",
                 "nullable": true
               },
+              "poll_config": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/PollConfig"
+                  }
+                ],
+                "nullable": true
+              },
               "type": {
                 "type": "string",
                 "enum": [
@@ -15402,6 +15514,31 @@
           }
         }
       },
+      "PaymentAttemptListRequest": {
+        "type": "object",
+        "required": [
+          "payment_intent_id"
+        ],
+        "properties": {
+          "payment_intent_id": {
+            "type": "string"
+          }
+        }
+      },
+      "PaymentAttemptListResponse": {
+        "type": "object",
+        "required": [
+          "payment_attempt_list"
+        ],
+        "properties": {
+          "payment_attempt_list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentAttemptResponse"
+            }
+          }
+        }
+      },
       "PaymentAttemptRecordResponse": {
         "type": "object",
         "required": [
@@ -15576,6 +15713,11 @@
                 "$ref": "#/components/schemas/TriggeredBy"
               }
             ],
+            "nullable": true
+          },
+          "charge_id": {
+            "type": "string",
+            "example": "ch_123abc456def789ghi012klmn",
             "nullable": true
           }
         }
@@ -15862,6 +16004,11 @@
             "type": "boolean",
             "description": "Boolean to control payment button text for setup mandate calls",
             "nullable": true
+          },
+          "color_icon_card_cvc_error": {
+            "type": "string",
+            "description": "Hex color for the CVC icon during error state",
+            "nullable": true
           }
         }
       },
@@ -16029,6 +16176,11 @@
           "is_setup_mandate_flow": {
             "type": "boolean",
             "description": "Boolean to control payment button text for setup mandate calls",
+            "nullable": true
+          },
+          "color_icon_card_cvc_error": {
+            "type": "string",
+            "description": "Hex color for the CVC icon during error state",
             "nullable": true
           }
         }
@@ -16955,7 +17107,7 @@
           },
           "recurring_enabled": {
             "type": "boolean",
-            "description": "Indicates whether the payment method is eligible for recurring payments",
+            "description": "Indicates whether the payment method supports recurring payments. Optional.",
             "example": true,
             "nullable": true
           },
@@ -17033,8 +17185,7 @@
           "id",
           "merchant_id",
           "customer_id",
-          "payment_method_type",
-          "recurring_enabled"
+          "payment_method_type"
         ],
         "properties": {
           "id": {
@@ -17067,8 +17218,9 @@
           },
           "recurring_enabled": {
             "type": "boolean",
-            "description": "Indicates whether the payment method is eligible for recurring payments",
-            "example": true
+            "description": "Indicates whether the payment method supports recurring payments. Optional.",
+            "example": true,
+            "nullable": true
           },
           "created": {
             "type": "string",
@@ -17132,7 +17284,6 @@
           "customer_id",
           "payment_method_type",
           "payment_method_subtype",
-          "recurring_enabled",
           "created",
           "requires_cvv",
           "is_default",
@@ -17159,8 +17310,9 @@
           },
           "recurring_enabled": {
             "type": "boolean",
-            "description": "Indicates whether the payment method is eligible for recurring payments",
-            "example": true
+            "description": "Indicates whether the payment method supports recurring payments. Optional.",
+            "example": true,
+            "nullable": true
           },
           "payment_method_data": {
             "allOf": [
@@ -17581,6 +17733,8 @@
           "open_banking_pis",
           "direct_carrier_billing",
           "instant_bank_transfer",
+          "instant_bank_transfer_finland",
+          "instant_bank_transfer_poland",
           "revolut_pay"
         ]
       },
@@ -17776,7 +17930,8 @@
           "billing_connector_payment_details",
           "payment_method_type",
           "payment_method_subtype",
-          "connector"
+          "connector",
+          "billing_connector_payment_method_details"
         ],
         "properties": {
           "total_retry_count": {
@@ -17816,10 +17971,31 @@
           "connector": {
             "$ref": "#/components/schemas/Connector"
           },
+          "billing_connector_payment_method_details": {
+            "$ref": "#/components/schemas/BillingConnectorPaymentMethodDetails"
+          },
           "invoice_next_billing_time": {
             "type": "string",
             "format": "date-time",
             "description": "Invoice Next billing time",
+            "nullable": true
+          },
+          "first_payment_attempt_pg_error_code": {
+            "type": "string",
+            "description": "First Payment Attempt Payment Gateway Error Code",
+            "example": "card_declined",
+            "nullable": true
+          },
+          "first_payment_attempt_network_decline_code": {
+            "type": "string",
+            "description": "First Payment Attempt Network Error Code",
+            "example": "05",
+            "nullable": true
+          },
+          "first_payment_attempt_network_advice_code": {
+            "type": "string",
+            "description": "First Payment Attempt Network Advice Code",
+            "example": "02",
             "nullable": true
           }
         }
@@ -17947,8 +18123,15 @@
           },
           "payment_token": {
             "type": "string",
-            "description": "Provide a reference to a stored payment method",
             "example": "187282ab-40ef-47a9-9206-5099ba31e432",
+            "nullable": true
+          },
+          "merchant_connector_details": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantConnectorDetails"
+              }
+            ],
             "nullable": true
           }
         },
@@ -18146,6 +18329,14 @@
           "force_3ds_challenge": {
             "type": "boolean",
             "description": "Indicates if 3ds challenge is forced",
+            "nullable": true
+          },
+          "merchant_connector_details": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantConnectorDetails"
+              }
+            ],
             "nullable": true
           }
         },
@@ -18933,6 +19124,14 @@
             "type": "boolean",
             "description": "Indicates if the redirection has to open in the iframe",
             "nullable": true
+          },
+          "merchant_connector_details": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantConnectorDetails"
+              }
+            ],
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -19109,12 +19308,20 @@
             "type": "boolean",
             "description": "Indicates if the redirection has to open in the iframe",
             "nullable": true
+          },
+          "merchant_reference_id": {
+            "type": "string",
+            "description": "Unique identifier for the payment. This ensures idempotency for multiple payments\nthat have been done by a single merchant.",
+            "example": "pay_mbabizu24mvu3mela5njyhpit4",
+            "nullable": true,
+            "maxLength": 30,
+            "minLength": 30
           }
         }
       },
       "PaymentsRetrieveRequest": {
         "type": "object",
-        "description": "Request for Payment Status",
+        "description": "Request body for Payment Status",
         "properties": {
           "force_sync": {
             "type": "boolean",
@@ -19132,6 +19339,14 @@
           "all_keys_required": {
             "type": "boolean",
             "description": "If enabled, provides whole connector response",
+            "nullable": true
+          },
+          "merchant_connector_details": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantConnectorDetails"
+              }
+            ],
             "nullable": true
           }
         }
@@ -19163,6 +19378,30 @@
                 "$ref": "#/components/schemas/VaultSessionDetails"
               }
             ],
+            "nullable": true
+          }
+        }
+      },
+      "PaymentsStatusRequest": {
+        "type": "object",
+        "description": "Request for Payment Status",
+        "properties": {
+          "force_sync": {
+            "type": "boolean",
+            "description": "A boolean used to indicate if the payment status should be fetched from the connector\nIf this is set to true, the status will be fetched from the connector"
+          },
+          "expand_attempts": {
+            "type": "boolean",
+            "description": "A boolean used to indicate if all the attempts needs to be fetched for the intent.\nIf this is set to true, attempts list will be available in the response."
+          },
+          "param": {
+            "type": "string",
+            "description": "These are the query params that are sent in case of redirect response.\nThese can be ingested by the connector to take necessary actions.",
+            "nullable": true
+          },
+          "all_keys_required": {
+            "type": "boolean",
+            "description": "If enabled, provides whole connector response",
             "nullable": true
           }
         }
@@ -20609,6 +20848,27 @@
           }
         }
       },
+      "PollConfig": {
+        "type": "object",
+        "required": [
+          "delay_in_secs",
+          "frequency"
+        ],
+        "properties": {
+          "delay_in_secs": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Interval of the poll",
+            "minimum": 0
+          },
+          "frequency": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Frequency of the poll",
+            "minimum": 0
+          }
+        }
+      },
       "PollConfigResponse": {
         "type": "object",
         "required": [
@@ -20922,6 +21182,7 @@
           "is_iframe_redirection_enabled": {
             "type": "boolean",
             "description": "Indicates if the redirection has to open in the iframe",
+            "example": false,
             "nullable": true
           },
           "is_external_vault_enabled": {
@@ -20933,6 +21194,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/ExternalVaultConnectorDetails"
+              }
+            ],
+            "nullable": true
+          },
+          "merchant_category_code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantCategoryCode"
               }
             ],
             "nullable": true
@@ -21190,6 +21459,7 @@
           "is_iframe_redirection_enabled": {
             "type": "boolean",
             "description": "Indicates if the redirection has to open in the iframe",
+            "example": false,
             "nullable": true
           },
           "is_external_vault_enabled": {
@@ -21201,6 +21471,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/ExternalVaultConnectorDetails"
+              }
+            ],
+            "nullable": true
+          },
+          "merchant_category_code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantCategoryCode"
               }
             ],
             "nullable": true
@@ -21843,9 +22121,7 @@
       "RequestPaymentMethodTypes": {
         "type": "object",
         "required": [
-          "payment_method_type",
-          "recurring_enabled",
-          "installment_payment_enabled"
+          "payment_method_type"
         ],
         "properties": {
           "payment_method_type": {
@@ -21900,15 +22176,15 @@
           },
           "recurring_enabled": {
             "type": "boolean",
-            "description": "Boolean to enable recurring payments / mandates. Default is true.",
-            "default": true,
-            "example": false
+            "description": "Indicates whether the payment method supports recurring payments. Optional.",
+            "example": false,
+            "nullable": true
           },
           "installment_payment_enabled": {
             "type": "boolean",
-            "description": "Boolean to enable installment / EMI / BNPL payments. Default is true.",
-            "default": true,
-            "example": false
+            "description": "Indicates whether the payment method is eligible for installment payments (e.g., EMI, BNPL). Optional.",
+            "example": true,
+            "nullable": true
           }
         }
       },
@@ -23794,6 +24070,10 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          },
+          "shuffle_on_tie_during_exploitation": {
+            "type": "boolean",
+            "nullable": true
           }
         }
       },
@@ -24016,6 +24296,7 @@
       },
       "ThreeDsCompletionIndicator": {
         "type": "string",
+        "description": "Indicates if 3DS method data was successfully completed or not",
         "enum": [
           "Y",
           "N",
