@@ -21,9 +21,6 @@
   ],
   "paths": {
     "/payments": {
-      "x-mcp": {
-        "enabled": true
-      },
       "post": {
         "tags": ["Payments"],
         "summary": "Payments - Create",
@@ -473,9 +470,6 @@
       }
     },
     "/payments/{payment_id}": {
-      "x-mcp": {
-        "enabled": true
-      },
       "post": {
         "tags": ["Payments"],
         "summary": "Payments - Update",
